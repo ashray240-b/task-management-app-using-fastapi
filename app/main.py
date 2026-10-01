@@ -1,9 +1,10 @@
 import logging
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -16,6 +17,8 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
 )
 logger = logging.getLogger("task-api")
+
+STATIC_DIR = Path(__file__).parent / "static"
 
 
 @asynccontextmanager
@@ -48,6 +51,12 @@ async def database_error_handler(request: Request, exc: SQLAlchemyError):
         status_code=503,
         content={"detail": "Database temporarily unavailable. Please retry."},
     )
+
+
+@app.get("/", include_in_schema=False)
+def index():
+    """Serve the single-page frontend."""
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/health", tags=["Health"])
